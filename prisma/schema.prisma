@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  verificationToken String?
+  resetPasswordToken    String? 
+  resetPasswordExpires  DateTime?
+  image         String?
+  stores        Store[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Store {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products      Product[]
+  orders        Order[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal
+  images      String[]
+  category    String?
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  inventory   Int         @default(0)
+  isArchived  Boolean     @default(false)
+
+  @@index([storeId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id])
+  orderItems  OrderItem[]
+  isPaid      Boolean     @default(false)
+  phone       String      @default("")
+  address     String      @default("")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([storeId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+
+  @@index([orderId])
+  @@index([productId])
+}
